@@ -7,16 +7,69 @@ import { IEvent } from "../4_models/Event";
 import { Api } from '../5_data/Api';
 import { Message } from "../5_data/Message";
 
+import multer from "multer";
+import { Image } from "../4_models/Image"
+import mongoose from "mongoose"; // ?
+import fs from "fs"; // ?
+import path from "path"; // ?
+
 dotenv.config({ path: 'config/_environment.env' });
-
-
 const endpoints = express();
-
 endpoints.use(cors());
 endpoints.use(express.static('public'));
 endpoints.use(bodyParser.json());
 
+// added for multer test start
+endpoints.use(bodyParser.urlencoded({extended: false}));
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads')
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.fieldname + '-' + Date.now())
+  }
+});
+
+const upload = multer({storage});
+
+// multer test end
+
 DB.connect(); // ask for connections
+
+// multer test start
+// get all images
+endpoints.get('/', (req, res) => {
+  Image.find({}, (err, items) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send(Message.cnap);
+    }
+    else {
+      res.render('imagesPage', { itmes: items});
+    }
+  });
+});
+
+// upload an image
+endpoints.post('/', upload.single('image'), (req, res, next) => {
+  const obj = {
+    name: req.body.name,
+    desc: req.body.desc,
+    img: {
+      data: fs.readFileSync(path.join(__dirname + '/uploads/' + req.file.filename)),
+      contentType: 'image/png'
+    }
+  }
+  Image.create(obj, (err, item) => {
+    if (err) {
+      console.log(err);
+    }
+    else {
+      res.redirect('/');
+    }
+  })
+})
+// ulter test end
 
 // ***EVENT ROUTES***
 

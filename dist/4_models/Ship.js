@@ -6,6 +6,8 @@ const ShipSchema = new mongoose_1.Schema({
     shipId: { type: Number, required: true },
     emailUsername: { type: String, required: true },
     name: { type: Number, required: true },
+    teamName: { type: String, required: false },
+    // teamImage?,
 });
 const Ship = mongoose_1.model('Ship', ShipSchema);
 exports.Ship = Ship;

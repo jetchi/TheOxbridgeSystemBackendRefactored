@@ -39,13 +39,62 @@ const bodyParser = __importStar(require("body-parser"));
 const DB_1 = require("../3_sessions/DB");
 const Api_1 = require("../5_data/Api");
 const Message_1 = require("../5_data/Message");
+const multer_1 = __importDefault(require("multer"));
+const Image_1 = require("../4_models/Image");
+const fs_1 = __importDefault(require("fs")); // ?
+const path_1 = __importDefault(require("path")); // ?
 dotenv.config({ path: 'config/_environment.env' });
 const endpoints = express_1.default();
 exports.endpoints = endpoints;
 endpoints.use(cors_1.default());
 endpoints.use(express_1.default.static('public'));
 endpoints.use(bodyParser.json());
+// added for multer test start
+endpoints.use(bodyParser.urlencoded({ extended: false }));
+const storage = multer_1.default.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads');
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.fieldname + '-' + Date.now());
+    }
+});
+const upload = multer_1.default({ storage });
+// multer test end
 DB_1.DB.connect(); // ask for connections
+// multer test start
+// get all images
+endpoints.get('/', (req, res) => {
+    Image_1.Image.find({}, (err, items) => {
+        if (err) {
+            console.log(err);
+            res.status(500).send(Message_1.Message.cnap);
+        }
+        else {
+            res.render('imagesPage', { itmes: items });
+        }
+    });
+});
+// upload an image
+endpoints.post('/', upload.single('image'), (req, res, next) => {
+    const obj = {
+        name: req.body.name,
+        desc: req.body.desc,
+        img: {
+            data: fs_1.default.readFileSync(path_1.default.join(__dirname + '/uploads/' + req.file.filename)),
+            contentType: 'image/png'
+        }
+    };
+    Image_1.Image.create(obj, (err, item) => {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            res.redirect('/');
+        }
+    });
+});
+// ulter test end
 // ***EVENT ROUTES***
 // Create a new event
 endpoints.post('/events', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
