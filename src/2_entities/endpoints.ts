@@ -50,7 +50,7 @@ endpoints.get('/', (req, res) => {
   });
 });
 
-// upload an image
+// upload an image -
 endpoints.post('/', upload.single('image'), (req, res, next) => {
   const obj = {
     name: req.body.name,
