@@ -1,6 +1,10 @@
+import { IShip } from "../4_models/Ship";
+import { Ship } from "../4_models/Ship";
 import { endpoints } from "../2_entities/endpoints";
 import { IEvent } from "../4_models/Event";
 import { Event } from "../4_models/Event";
+import mongoose from "mongoose"; // ?
+mongoose.set('useFindAndModify', false);
 
 class Api{
 
@@ -40,8 +44,8 @@ class Api{
         return events;
     }
 
-    static async getEventById(uid:string):Promise<any>{
-        const uid_nr = Number(uid);
+    static async getEventById(eventId:string):Promise<any>{
+        const uid_nr = Number(eventId);
         const query = {"eventId": uid_nr}; // the field with the value I am looking for
         const projection = { // the fields of the object I want to display once its found
             "eventId": 1,
@@ -64,6 +68,42 @@ class Api{
 // ***RACEPOINTS ROUTES***
 
 // ***SHIP ROUTES***
+
+static async getShips():Promise<any>{
+    const ships: IShip[] = await Ship.find({},{_id:0,__v:0});
+    return ships;
+}
+
+static async getShipById(shipId:string):Promise<any>{
+    const uid_nr = Number(shipId);
+    const query = {"shipId": uid_nr}; // the field with the value I am looking for
+    const projection = { // the fields of the object I want to display once its found
+        "shipId": 1,
+        "emailUsername": 1,
+        "name": 1,
+        "teamName": 1,
+        // "teamImage": 1,
+    }
+    const demandedShip:IShip = await Ship.findOne(query, projection);
+    return demandedShip;
+}
+
+// static async updateShip(shipId:number, newShip:IShip):Promise<any> {
+//     const filter = {shipId}; // shipId; //req.params.shipId
+//     const update = new Ship(newShip);
+//         // If you use Model.findOneAndUpdate(), by default you'll see a deprecation warning.
+//         // Mongoose's findOneAndUpdate() long pre-dates the MongoDB driver's findOneAndUpdate() function, so it uses the MongoDB driver's findAndModify() function instead.
+//         // You can opt in to using the MongoDB driver's findOneAndUpdate() function using the useFindAndModify global option.
+//         // SEE above under imports "mongoose.set..."
+//         // https://mongoosejs.com/docs/deprecations.html#findandmodify
+//     const updatedShip:IShip = await Ship.findOneAndUpdate(filter, update, {
+//         new: true
+//         // returnOriginal: false // this will return the updated model, without this, it would by default return the "old" model from before the update.
+//     });
+//     return updatedShip;
+// }
+
+
 
 // ***USER ROUTES***
 }

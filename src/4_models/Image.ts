@@ -1,5 +1,7 @@
 import {model, Schema, Model, Document} from 'mongoose';
 // want to encapsulate
+// we are using an interface to make typescript aware of the properties ans data types we expect in our model instance
+// an interface = a syntactical contract, that an entity should conform to (defines the shape of an object)
 interface IImage extends Document {
   // todo encrypt the details
     name: string;

@@ -41,8 +41,8 @@ const Api_1 = require("../5_data/Api");
 const Message_1 = require("../5_data/Message");
 const multer_1 = __importDefault(require("multer"));
 const Image_1 = require("../4_models/Image");
-const fs_1 = __importDefault(require("fs")); // ?
-const path_1 = __importDefault(require("path")); // ?
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 dotenv.config({ path: 'config/_environment.env' });
 const endpoints = express_1.default();
 exports.endpoints = endpoints;
@@ -53,7 +53,7 @@ endpoints.use(bodyParser.json());
 endpoints.use(bodyParser.urlencoded({ extended: false }));
 const storage = multer_1.default.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads');
+        cb(null, '../uploads');
     },
     filename: (req, file, cb) => {
         cb(null, file.fieldname + '-' + Date.now());
@@ -62,7 +62,7 @@ const storage = multer_1.default.diskStorage({
 const upload = multer_1.default({ storage });
 // multer test end
 DB_1.DB.connect(); // ask for connections
-// multer test start
+// multer test 1 start
 // get all images
 endpoints.get('/', (req, res) => {
     Image_1.Image.find({}, (err, items) => {
@@ -75,13 +75,13 @@ endpoints.get('/', (req, res) => {
         }
     });
 });
-// upload an image
+// upload an image -
 endpoints.post('/', upload.single('image'), (req, res, next) => {
     const obj = {
         name: req.body.name,
         desc: req.body.desc,
         img: {
-            data: fs_1.default.readFileSync(path_1.default.join(__dirname + '/uploads/' + req.file.filename)),
+            data: fs_1.default.readFileSync(path_1.default.join(__dirname + '../uploads/' + req.file.filename)),
             contentType: 'image/png'
         }
     };
@@ -90,11 +90,12 @@ endpoints.post('/', upload.single('image'), (req, res, next) => {
             console.log(err);
         }
         else {
+            item.save();
             res.redirect('/');
         }
     });
 });
-// ulter test end
+// multer test 1 end
 // ***EVENT ROUTES***
 // Create a new event
 endpoints.post('/events', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -114,9 +115,9 @@ endpoints.get('/events', (req, res) => __awaiter(void 0, void 0, void 0, functio
     return res.status(200).json(events);
 }));
 // retrieve a single Event with eventId
-endpoints.get('/api/event/:uid', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+endpoints.get('/events/:eventId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const event = yield Api_1.Api.getEventById(req.params.uid);
+        const event = yield Api_1.Api.getEventById(req.params.eventId);
         return res.status(200).json(event);
     }
     catch (e) {
@@ -133,6 +134,33 @@ endpoints.get('/api/event/:uid', (req, res) => __awaiter(void 0, void 0, void 0,
 // ***LOCATIONREGISTRATION ROUTES***
 // ***RACEPOINTS ROUTES***
 // ***SHIP ROUTES***
+// retrieve and return all ships from the database
+endpoints.get('/ships', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const ships = yield Api_1.Api.getShips();
+    return res.status(200).json(ships);
+}));
+// retrieve a single Ship with shipId
+endpoints.get('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const ship = yield Api_1.Api.getShipById(req.params.shipId);
+        return res.status(200).json(ship);
+    }
+    catch (e) {
+        return res.status(400).json();
+    }
+}));
+// update a ship
+endpoints.put('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // TODO add check auth
+    // finding and updating the ship with the given shipId
+    try {
+        const updatedShip = yield Api_1.Api.updateShip(Number(req.params.shipId), req.body);
+        return res.status(200).json(updatedShip);
+    }
+    catch (e) {
+        return res.status(400).json(Message_1.Message.cnap);
+    }
+}));
 // ***USER ROUTES***
 // *** "safety route" ***
 // all other routes only GET, means you can only get data via the specified routes above.

@@ -4,8 +4,8 @@ exports.Ship = void 0;
 const mongoose_1 = require("mongoose");
 const ShipSchema = new mongoose_1.Schema({
     shipId: { type: Number, required: true },
-    emailUsername: { type: String, required: true },
-    name: { type: Number, required: true },
+    emailUsername: { type: String, required: false },
+    name: { type: String, required: true },
     teamName: { type: String, required: false },
     // teamImage?,
 });

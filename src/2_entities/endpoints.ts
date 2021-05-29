@@ -9,9 +9,10 @@ import { Message } from "../5_data/Message";
 
 import multer from "multer";
 import { Image } from "../4_models/Image"
-import mongoose from "mongoose"; // ?
-import fs from "fs"; // ?
-import path from "path"; // ?
+import fs from "fs";
+import path from "path";
+import { IShip, Ship } from "../4_models/Ship";
+
 
 dotenv.config({ path: 'config/_environment.env' });
 const endpoints = express();
@@ -23,7 +24,7 @@ endpoints.use(bodyParser.json());
 endpoints.use(bodyParser.urlencoded({extended: false}));
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads')
+    cb(null, '../uploads')
   },
   filename: (req, file, cb) => {
     cb(null, file.fieldname + '-' + Date.now())
@@ -36,7 +37,7 @@ const upload = multer({storage});
 
 DB.connect(); // ask for connections
 
-// multer test start
+// multer test 1 start
 // get all images
 endpoints.get('/', (req, res) => {
   Image.find({}, (err, items) => {
@@ -56,7 +57,7 @@ endpoints.post('/', upload.single('image'), (req, res, next) => {
     name: req.body.name,
     desc: req.body.desc,
     img: {
-      data: fs.readFileSync(path.join(__dirname + '/uploads/' + req.file.filename)),
+      data: fs.readFileSync(path.join(__dirname + '../uploads/' + req.file.filename)),
       contentType: 'image/png'
     }
   }
@@ -65,11 +66,13 @@ endpoints.post('/', upload.single('image'), (req, res, next) => {
       console.log(err);
     }
     else {
+      item.save();
       res.redirect('/');
     }
   })
 })
-// ulter test end
+// multer test 1 end
+
 
 // ***EVENT ROUTES***
 
@@ -99,9 +102,9 @@ endpoints.get('/events', async (req, res) => { // changed from this '/api/events
 })
 
 // retrieve a single Event with eventId
-endpoints.get('/api/event/:uid', async (req, res) => {
+endpoints.get('/events/:eventId', async (req, res) => {
   try{
-    const event:Promise<IEvent> = await Api.getEventById(req.params.uid);
+    const event:Promise<IEvent> = await Api.getEventById(req.params.eventId);
     return res.status(200).json(event);
   }catch(e){
     return res.status(400).json();
@@ -122,6 +125,36 @@ endpoints.get('/api/event/:uid', async (req, res) => {
 // ***RACEPOINTS ROUTES***
 
 // ***SHIP ROUTES***
+
+// retrieve and return all ships from the database
+endpoints.get('/ships', async (req, res) => { // changed from this '/api/events'
+  const ships:Promise<IShip[]> = await Api.getShips();
+  return res.status(200).json(ships);
+})
+
+// retrieve a single Ship with shipId
+endpoints.get('/ships/:shipId', async (req, res) => {
+  try{
+    const ship:Promise<IShip> = await Api.getShipById(req.params.shipId);
+    return res.status(200).json(ship);
+  }catch(e){
+    return res.status(400).json();
+  }
+})
+
+// update a ship
+// endpoints.put('/ships/:shipId', async (req, res) => {
+
+//   // TODO add check auth
+
+//   // finding and updating the ship with the given shipId
+//    try {
+//     const updatedShip:Promise<IShip> = await Api.updateShip(Number(req.params.shipId), req.body);
+//     return res.status(200).json(updatedShip);
+//   }catch (e){
+//     return res.status(400).json(Message.cnap);
+//   }
+// });
 
 // ***USER ROUTES***
 
