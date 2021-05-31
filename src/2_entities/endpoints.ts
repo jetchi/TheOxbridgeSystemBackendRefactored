@@ -1,7 +1,7 @@
 import cors from "cors";
 import express from "express";
 import * as dotenv from 'dotenv';
-import * as bodyParser from 'body-parser';
+import * as bodyParser from "body-parser";
 import { DB } from "../3_sessions/DB";
 import { IEvent } from "../4_models/Event";
 import { Api } from '../5_data/Api';
@@ -16,6 +16,7 @@ import { IShip, Ship } from "../4_models/Ship";
 
 dotenv.config({ path: 'config/_environment.env' });
 const endpoints = express();
+
 endpoints.use(cors());
 endpoints.use(express.static('public'));
 endpoints.use(bodyParser.json());
@@ -135,7 +136,7 @@ endpoints.get('/ships', async (req, res) => { // changed from this '/api/events'
 // retrieve a single Ship with shipId
 endpoints.get('/ships/:shipId', async (req, res) => {
   try{
-    const ship:Promise<IShip> = await Api.getShipById(req.params.shipId);
+    const ship:Promise<IShip> = await Api.getShipById(Number(req.params.shipId));
     return res.status(200).json(ship);
   }catch(e){
     return res.status(400).json();
@@ -143,18 +144,16 @@ endpoints.get('/ships/:shipId', async (req, res) => {
 })
 
 // update a ship
-// endpoints.put('/ships/:shipId', async (req, res) => {
-
-//   // TODO add check auth
-
-//   // finding and updating the ship with the given shipId
-//    try {
-//     const updatedShip:Promise<IShip> = await Api.updateShip(Number(req.params.shipId), req.body);
-//     return res.status(200).json(updatedShip);
-//   }catch (e){
-//     return res.status(400).json(Message.cnap);
-//   }
-// });
+endpoints.put('/ships', async (req, res) => {
+  // TODO add check auth
+  try{
+      console.log("new name for the ship(sent in the body): " + req.body.name); // just for debugging purposes
+      const success:Promise<boolean> = Api.updateShip(req.body.shipId, req.body.name, req.body.teamName, req.body.teamImage);
+      return res.status(201).json({success});
+  }catch(e){
+      return res.status(400).json(Message.se);
+  }
+});
 
 // ***USER ROUTES***
 

@@ -4,6 +4,7 @@ import { endpoints } from "../2_entities/endpoints";
 import { IEvent } from "../4_models/Event";
 import { Event } from "../4_models/Event";
 import mongoose from "mongoose"; // ?
+import { IImage } from "../4_models/Image";
 mongoose.set('useFindAndModify', false);
 
 class Api{
@@ -74,9 +75,8 @@ static async getShips():Promise<any>{
     return ships;
 }
 
-static async getShipById(shipId:string):Promise<any>{
-    const uid_nr = Number(shipId);
-    const query = {"shipId": uid_nr}; // the field with the value I am looking for
+static async getShipById(shipId:number):Promise<any>{
+    const query = {"shipId": shipId}; // the field with the value I am looking for
     const projection = { // the fields of the object I want to display once its found
         "shipId": 1,
         "emailUsername": 1,
@@ -88,20 +88,20 @@ static async getShipById(shipId:string):Promise<any>{
     return demandedShip;
 }
 
-// static async updateShip(shipId:number, newShip:IShip):Promise<any> {
-//     const filter = {shipId}; // shipId; //req.params.shipId
-//     const update = new Ship(newShip);
-//         // If you use Model.findOneAndUpdate(), by default you'll see a deprecation warning.
-//         // Mongoose's findOneAndUpdate() long pre-dates the MongoDB driver's findOneAndUpdate() function, so it uses the MongoDB driver's findAndModify() function instead.
-//         // You can opt in to using the MongoDB driver's findOneAndUpdate() function using the useFindAndModify global option.
-//         // SEE above under imports "mongoose.set..."
-//         // https://mongoosejs.com/docs/deprecations.html#findandmodify
-//     const updatedShip:IShip = await Ship.findOneAndUpdate(filter, update, {
-//         new: true
-//         // returnOriginal: false // this will return the updated model, without this, it would by default return the "old" model from before the update.
-//     });
-//     return updatedShip;
-// }
+static async updateShip(shipId: number, name: string, teamName: string, teamImage:IImage):Promise<boolean>{
+    const chosenShip: Promise<IShip> = Api.getShipById(shipId);
+    console.log("is the chosenship found?: " + (await chosenShip).shipId + ' - ' + (await chosenShip).name);
+    const query = {"shipId": shipId};
+    const update = {"$set": { // the new ship object
+        "name": name,
+        "shipId": shipId,
+        "teamName": teamName,
+        "teamImage": teamImage
+    }};
+    const options = {"upsert": false}; // if the document to change cant be found, it will not insert a document with these params
+    await Ship.updateOne(query, update, options);
+    return true;
+}
 
 
 

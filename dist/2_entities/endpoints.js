@@ -142,7 +142,7 @@ endpoints.get('/ships', (req, res) => __awaiter(void 0, void 0, void 0, function
 // retrieve a single Ship with shipId
 endpoints.get('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const ship = yield Api_1.Api.getShipById(req.params.shipId);
+        const ship = yield Api_1.Api.getShipById(Number(req.params.shipId));
         return res.status(200).json(ship);
     }
     catch (e) {
@@ -150,15 +150,15 @@ endpoints.get('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, 
     }
 }));
 // update a ship
-endpoints.put('/ships/:shipId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+endpoints.put('/ships', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // TODO add check auth
-    // finding and updating the ship with the given shipId
     try {
-        const updatedShip = yield Api_1.Api.updateShip(Number(req.params.shipId), req.body);
-        return res.status(200).json(updatedShip);
+        console.log("new name for the ship(sent in the body): " + req.body.name); // just for debugging purposes
+        const success = Api_1.Api.updateShip(req.body.shipId, req.body.name, req.body.teamName, req.body.teamImage);
+        return res.status(201).json({ success });
     }
     catch (e) {
-        return res.status(400).json(Message_1.Message.cnap);
+        return res.status(400).json(Message_1.Message.se);
     }
 }));
 // ***USER ROUTES***

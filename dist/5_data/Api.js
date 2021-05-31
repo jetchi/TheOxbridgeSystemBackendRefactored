@@ -83,8 +83,7 @@ class Api {
     }
     static getShipById(shipId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const uid_nr = Number(shipId);
-            const query = { "shipId": uid_nr }; // the field with the value I am looking for
+            const query = { "shipId": shipId }; // the field with the value I am looking for
             const projection = {
                 "shipId": 1,
                 "emailUsername": 1,
@@ -96,20 +95,20 @@ class Api {
             return demandedShip;
         });
     }
-    static updateShip(shipId, newShip) {
+    static updateShip(shipId, name, teamName, teamImage) {
         return __awaiter(this, void 0, void 0, function* () {
-            const filter = { shipId }; // shipId; //req.params.shipId
-            const update = new Ship_1.Ship(newShip);
-            // If you use Model.findOneAndUpdate(), by default you'll see a deprecation warning.
-            // Mongoose's findOneAndUpdate() long pre-dates the MongoDB driver's findOneAndUpdate() function, so it uses the MongoDB driver's findAndModify() function instead.
-            // You can opt in to using the MongoDB driver's findOneAndUpdate() function using the useFindAndModify global option.
-            // SEE above under imports "mongoose.set..."
-            // https://mongoosejs.com/docs/deprecations.html#findandmodify
-            const updatedShip = yield Ship_1.Ship.findOneAndUpdate(filter, update, {
-                new: true
-                // returnOriginal: false // this will return the updated model, without this, it would by default return the "old" model from before the update.
-            });
-            return updatedShip;
+            const chosenShip = Api.getShipById(shipId);
+            console.log("is the chosenship found?: " + (yield chosenShip).shipId + ' - ' + (yield chosenShip).name);
+            const query = { "shipId": shipId };
+            const update = { "$set": {
+                    "name": name,
+                    "shipId": shipId,
+                    "teamName": teamName,
+                    "teamImage": teamImage
+                } };
+            const options = { "upsert": false }; // if the document to change cant be found, it will not insert a document with these params
+            yield Ship_1.Ship.updateOne(query, update, options);
+            return true;
         });
     }
 }

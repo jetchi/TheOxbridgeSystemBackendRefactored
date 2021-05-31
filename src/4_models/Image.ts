@@ -4,8 +4,8 @@ import {model, Schema, Model, Document} from 'mongoose';
 // an interface = a syntactical contract, that an entity should conform to (defines the shape of an object)
 interface IImage extends Document {
   // todo encrypt the details
-    name: string;
-    desc: string;
+    imgName: string;
+    imgDescription: string;
     img: {
         data : Buffer;
         contentType : string;
@@ -13,8 +13,8 @@ interface IImage extends Document {
 }
 
 const ImageSchema: Schema = new Schema({
-    name: { type: String, required: true },
-    desc: { type: String, required: true },
+    imgName: { type: String, required: true },
+    imgDescription: { type: String, required: true },
     img: {
         data: { type: Buffer, required: true }, // allows us to store images as data in the form of arrays
         contentType: { type: String, required: true },

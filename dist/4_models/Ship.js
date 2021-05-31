@@ -7,7 +7,7 @@ const ShipSchema = new mongoose_1.Schema({
     emailUsername: { type: String, required: false },
     name: { type: String, required: true },
     teamName: { type: String, required: false },
-    // teamImage?,
+    teamImage: { type: Buffer, required: false }, // ?
 });
 const Ship = mongoose_1.model('Ship', ShipSchema);
 exports.Ship = Ship;
