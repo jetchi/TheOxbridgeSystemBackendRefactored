@@ -19,7 +19,7 @@ const mongoose_1 = __importDefault(require("mongoose")); // ?
 mongoose_1.default.set('useFindAndModify', false);
 class Api {
     // ***EVENT routes***
-    static createEvent(name, eventStart, eventEnd, city, eventCode, actualEventStart) {
+    static createEvent(name, eventStart, eventEnd, city, eventCode, actualEventStart, isLive) {
         return __awaiter(this, void 0, void 0, function* () {
             // check authorization, only if this is valid, do the things below to create a new event
             // find the next event ID
@@ -41,7 +41,7 @@ class Api {
                 city,
                 eventCode,
                 actualEventStart,
-                // isLive,
+                isLive,
             });
             yield newEvent.save();
             return true;
@@ -89,7 +89,7 @@ class Api {
                 "emailUsername": 1,
                 "name": 1,
                 "teamName": 1,
-                // "teamImage": 1,
+                "teamImage": 1,
             };
             const demandedShip = yield Ship_1.Ship.findOne(query, projection);
             return demandedShip;

@@ -12,7 +12,7 @@ class Api{
 
     // ***EVENT routes***
 
-    static async createEvent(name: string, eventStart: Date, eventEnd: Date, city: string, eventCode: string, actualEventStart : Date): Promise<boolean>{
+    static async createEvent(name: string, eventStart: Date, eventEnd: Date, city: string, eventCode: string, actualEventStart : Date, isLive:boolean): Promise<boolean>{
 
         // check authorization, only if this is valid, do the things below to create a new event
 
@@ -34,7 +34,7 @@ class Api{
             city,
             eventCode,
             actualEventStart,
-            // isLive,
+            isLive,
         });
         await newEvent.save();
         return true;
@@ -82,7 +82,7 @@ static async getShipById(shipId:number):Promise<any>{
         "emailUsername": 1,
         "name": 1,
         "teamName": 1,
-        // "teamImage": 1,
+        "teamImage": 1,
     }
     const demandedShip:IShip = await Ship.findOne(query, projection);
     return demandedShip;

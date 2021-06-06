@@ -21,40 +21,96 @@ endpoints.use(cors());
 endpoints.use(express.static('public'));
 endpoints.use(bodyParser.json());
 
-// added for multer test start
 endpoints.use(bodyParser.urlencoded({extended: false}));
-const storage = multer.diskStorage({
+
+const storage = multer.diskStorage({ // file storage engine will tell multer how and where to store the files
   destination: (req, file, cb) => {
-    cb(null, '../uploads')
+    cb(null, './src/uploads') // NB path!
+    /*
+    '../uploads' - send it to upöoads in the new code folder -level too high
+    './uploads' - error
+    '/uploads' - error
+    'uploads' - error
+    './src/uploads' - yes!
+    */
   },
   filename: (req, file, cb) => {
-    cb(null, file.fieldname + '-' + Date.now())
+    const fileExtension = file.originalname.substr(file.originalname.lastIndexOf('.')); // will return the ".jpg" from a image.jpg
+    cb(null, file.fieldname + '-' + Date.now() + fileExtension) // this is how the new name for the file is put together
   }
 });
 
-const upload = multer({storage});
-
-// multer test end
+const upload = multer({storage}); // creating middleware
 
 DB.connect(); // ask for connections
 
-// multer test 1 start
-// get all images
-endpoints.get('/', (req, res) => {
-  Image.find({}, (err, items) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send(Message.cnap);
+
+// get all images multer test 1 : in progress
+// endpoints.get('/', (req, res) => {
+//   Image.find({}, (err, items) => {
+//     if (err) {
+//       console.log(err);
+//       res.status(500).send(Message.cnap);
+//     }
+//     else {
+//       res.render('imagesPage', { itmes: items});
+//     }
+//   });
+// });
+
+// upload an image to the server using multer - works
+endpoints.post('/images', upload.single("image"), async (req, res /*, next*/) => { // sending via postman: the key field in the body must equal "image"
+  // console.log(req.file); //only for debug purp.
+  // new start
+  // convert image into base64 encoding (data into ascii character set)
+  const img = fs.readFileSync(req.file.path);
+  // console.log('what is the img?: ' + img); //only for debug purp.
+  const encode_image = img.toString('base64');
+  // console.log('how does the encode_image look like?: '+ encode_image); // ascii as expected -only for debug purp.
+
+  // const result = (async () => {
+    // console.log('test -goes into result?'); // yes -only for debug purp.
+    const finalImg = {
+      filename:req.file.originalname,
+      contentType: req.file.mimetype,
+      imageBase64: encode_image
     }
-    else {
-      res.render('imagesPage', { itmes: items});
+
+    console.log('test - creates finalImg?: ' + finalImg); // gives back "[object Object]" -only for debug purp.
+
+    const newImage = new Image(finalImg);
+    try {
+      await newImage
+        .save();
+        console.log('the new image to store: ' + newImage); // also displays this -only for debug purp.
+
+      return res.status(201).json({ msg: 'Image upload successfully!' });
+    } catch (error) {
+      if (error) {
+        if (error.name === 'MongooseError' && error.code === 11000) { // means, if trying to upload a duplicate image
+          return Promise.reject({ error: 'Duplicate ${req.file.originalname}. File Already Exists! ' });
+        }
+        return Promise.reject({ error: error.message || 'Cannot upload ${req.file.originalname} Something is missing!' });
+      }
     }
-  });
+// });
+
+Promise.resolve()
+  .then(msg => {
+    res.json(msg);
+  })
+  .catch(err => {
+    res.json(err)
+  })
+// // new end
+//   res.send("single file upload to server success");
 });
 
-// upload an image -
-endpoints.post('/', upload.single('image'), (req, res, next) => {
-  const obj = {
+
+
+
+
+ /*const obj = {
     name: req.body.name,
     desc: req.body.desc,
     img: {
@@ -68,12 +124,10 @@ endpoints.post('/', upload.single('image'), (req, res, next) => {
     }
     else {
       item.save();
-      res.redirect('/');
+      res.redirect('/images');
     }
   })
-})
-// multer test 1 end
-
+  */
 
 // ***EVENT ROUTES***
 
@@ -88,7 +142,7 @@ endpoints.post('/events', async (req, res) => { // change from this '/api/events
       req.body.city,
       req.body.eventCode,
       req.body.actualEventStart,
-      // req.body.isLive // is this automatically sat to false when the even is created? look how ots done in website?
+      req.body.isLive,
       );
       return res.status(201).json({success});
   }catch(e){

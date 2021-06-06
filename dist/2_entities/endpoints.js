@@ -42,67 +42,111 @@ const Message_1 = require("../5_data/Message");
 const multer_1 = __importDefault(require("multer"));
 const Image_1 = require("../4_models/Image");
 const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
 dotenv.config({ path: 'config/_environment.env' });
 const endpoints = express_1.default();
 exports.endpoints = endpoints;
 endpoints.use(cors_1.default());
 endpoints.use(express_1.default.static('public'));
 endpoints.use(bodyParser.json());
-// added for multer test start
 endpoints.use(bodyParser.urlencoded({ extended: false }));
 const storage = multer_1.default.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, '../uploads');
+        cb(null, './src/uploads'); // NB path!
+        /*
+        '../uploads' - send it to upöoads in the new code folder -level too high
+        './uploads' - error
+        '/uploads' - error
+        'uploads' - error
+        './src/uploads' - yes!
+        */
     },
     filename: (req, file, cb) => {
-        cb(null, file.fieldname + '-' + Date.now());
+        const fileExtension = file.originalname.substr(file.originalname.lastIndexOf('.')); // will return the ".jpg" from a image.jpg
+        cb(null, file.fieldname + '-' + Date.now() + fileExtension); // this is how the new name for the file is put together
     }
 });
-const upload = multer_1.default({ storage });
-// multer test end
+const upload = multer_1.default({ storage }); // creating middleware
 DB_1.DB.connect(); // ask for connections
-// multer test 1 start
-// get all images
-endpoints.get('/', (req, res) => {
-    Image_1.Image.find({}, (err, items) => {
-        if (err) {
-            console.log(err);
-            res.status(500).send(Message_1.Message.cnap);
-        }
-        else {
-            res.render('imagesPage', { itmes: items });
-        }
-    });
-});
-// upload an image -
-endpoints.post('/', upload.single('image'), (req, res, next) => {
-    const obj = {
-        name: req.body.name,
-        desc: req.body.desc,
-        img: {
-            data: fs_1.default.readFileSync(path_1.default.join(__dirname + '../uploads/' + req.file.filename)),
-            contentType: 'image/png'
-        }
+// get all images multer test 1 : in progress
+// endpoints.get('/', (req, res) => {
+//   Image.find({}, (err, items) => {
+//     if (err) {
+//       console.log(err);
+//       res.status(500).send(Message.cnap);
+//     }
+//     else {
+//       res.render('imagesPage', { itmes: items});
+//     }
+//   });
+// });
+// upload an image to the server using multer - works
+endpoints.post('/images', upload.single("image"), (req, res /*, next*/) => __awaiter(void 0, void 0, void 0, function* () {
+    // console.log(req.file); //only for debug purp.
+    // new start
+    // convert image into base64 encoding (data into ascii character set)
+    const img = fs_1.default.readFileSync(req.file.path);
+    // console.log('what is the img?: ' + img); //only for debug purp.
+    const encode_image = img.toString('base64');
+    // console.log('how does the encode_image look like?: '+ encode_image); // ascii as expected -only for debug purp.
+    // const result = (async () => {
+    // console.log('test -goes into result?'); // yes -only for debug purp.
+    const finalImg = {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype,
+        imageBase64: encode_image
     };
-    Image_1.Image.create(obj, (err, item) => {
-        if (err) {
-            console.log(err);
+    console.log('test - creates finalImg?: ' + finalImg); // gives back "[object Object]" -only for debug purp.
+    const newImage = new Image_1.Image(finalImg);
+    try {
+        yield newImage
+            .save();
+        console.log('the new image to store: ' + newImage); // also displays this -only for debug purp.
+        return res.status(201).json({ msg: '${req.file.originalname} Image upload successfully!' });
+    }
+    catch (error) {
+        if (error) {
+            if (error.name === 'MongooseError' && error.code === 11000) { // means, if trying to upload a duplicate image
+                return Promise.reject({ error: 'Duplicate ${req.file.originalname}. File Already Exists! ' });
+            }
+            return Promise.reject({ error: error.message || 'Cannot upload ${req.file.originalname} Something is missing!' });
         }
-        else {
-            item.save();
-            res.redirect('/');
-        }
+    }
+    // });
+    Promise.resolve()
+        .then(msg => {
+        res.json(msg);
+    })
+        .catch(err => {
+        res.json(err);
     });
-});
-// multer test 1 end
+    // // new end
+    //   res.send("single file upload to server success");
+}));
+/*const obj = {
+   name: req.body.name,
+   desc: req.body.desc,
+   img: {
+     data: fs.readFileSync(path.join(__dirname + '../uploads/' + req.file.filename)),
+     contentType: 'image/png'
+   }
+ }
+ Image.create(obj, (err, item) => {
+   if (err) {
+     console.log(err);
+   }
+   else {
+     item.save();
+     res.redirect('/images');
+   }
+ })
+ */
 // ***EVENT ROUTES***
 // Create a new event
 endpoints.post('/events', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const success = Api_1.Api.createEvent(// the info send within the request body by the client (like with postman)
         // req.body.eventId, // the ID needs to be calculated and is not given by the user
-        req.body.name, req.body.eventStart, req.body.eventEnd, req.body.city, req.body.eventCode, req.body.actualEventStart);
+        req.body.name, req.body.eventStart, req.body.eventEnd, req.body.city, req.body.eventCode, req.body.actualEventStart, req.body.isLive);
         return res.status(201).json({ success });
     }
     catch (e) {
