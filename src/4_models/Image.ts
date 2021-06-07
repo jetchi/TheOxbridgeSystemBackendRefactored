@@ -11,7 +11,8 @@ interface IImage extends Document {
     // second version, working from postman:
     filename: string,
     contentType: string,
-    imageBase64: string
+    imageBase64: string,
+    shipId_img: number
 
     // first version
     // imgName: string;
@@ -26,7 +27,8 @@ const ImageSchema: Schema = new Schema({
     // second version:
     filename: { type: String, required: true},
     contentType: {type: String, required: true},
-    imageBase64: {type: String, required: true}
+    imageBase64: {type: String, required: true},
+    shipId_img: {type: Number, required: true}
 
     // first version:
     // imgName: { type: String, required: true },

@@ -4,11 +4,39 @@ import { endpoints } from "../2_entities/endpoints";
 import { IEvent } from "../4_models/Event";
 import { Event } from "../4_models/Event";
 import mongoose from "mongoose"; // ?
-import { IImage } from "../4_models/Image";
+import { IImage, Image } from "../4_models/Image";
+import { stringifyConfiguration } from "tslint/lib/configuration";
 mongoose.set('useFindAndModify', false);
 
 class Api{
 
+    // save image with shipID to DB
+static async saveImgDB(filename: string, contentType: string, imageBase64: string, shipId_img: number): Promise<boolean>{
+    // const newEvent: IEvent = new Event({
+    const newImage: IImage = new Image ({
+      filename,
+      contentType,
+      imageBase64,
+      shipId_img
+    })
+
+    await newImage.save();
+
+    // try {
+    //   await newImage.save();
+
+    //   res.status(201).json({ msg: 'Image upload successfully!' });
+    // } catch (error) {
+    //   if (error) {
+    //     if (error.name === 'MongooseError' && error.code === 11000) { // means, if trying to upload a duplicate image
+    //       return Promise.reject({ error: 'Duplicate ${req.file.originalname}. File Already Exists! ' });
+    //     }
+    //     return Promise.reject({ error: error.message || 'Cannot upload ${req.file.originalname} Something is missing!' });
+    //   }
+    // }
+
+    return true;
+}
 
     // ***EVENT routes***
 

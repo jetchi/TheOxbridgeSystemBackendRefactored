@@ -8,7 +8,7 @@ import { Api } from '../5_data/Api';
 import { Message } from "../5_data/Message";
 
 import multer from "multer";
-import { Image } from "../4_models/Image"
+import { IImage, Image } from "../4_models/Image"
 import fs from "fs";
 import path from "path";
 import { IShip, Ship } from "../4_models/Ship";
@@ -26,17 +26,10 @@ endpoints.use(bodyParser.urlencoded({extended: false}));
 const storage = multer.diskStorage({ // file storage engine will tell multer how and where to store the files
   destination: (req, file, cb) => {
     cb(null, './src/uploads') // NB path!
-    /*
-    '../uploads' - send it to upöoads in the new code folder -level too high
-    './uploads' - error
-    '/uploads' - error
-    'uploads' - error
-    './src/uploads' - yes!
-    */
   },
   filename: (req, file, cb) => {
     const fileExtension = file.originalname.substr(file.originalname.lastIndexOf('.')); // will return the ".jpg" from a image.jpg
-    cb(null, file.fieldname + '-' + Date.now() + fileExtension) // this is how the new name for the file is put together
+    cb(null, file.fieldname + '-' + Date.now() + fileExtension) // this is how the new name for the file is put together 8stored on the server in "uploads" folder)
   }
 });
 
@@ -58,57 +51,27 @@ DB.connect(); // ask for connections
 //   });
 // });
 
-// upload an image to the server using multer - works
-endpoints.post('/images', upload.single("image"), async (req, res /*, next*/) => { // sending via postman: the key field in the body must equal "image"
-  // console.log(req.file); //only for debug purp.
-  // new start
-  // convert image into base64 encoding (data into ascii character set)
+// upload an image to the server & DB using multer - works
+endpoints.post('/images', upload.single("image"), async (req, res) => { // sending via postman: the key field in the body must equal "image"
+
+  // Save the image in the DB as follows:
+
   const img = fs.readFileSync(req.file.path);
-  // console.log('what is the img?: ' + img); //only for debug purp.
+  // convert image into base64 encoding (data into ascii character set)
   const encode_image = img.toString('base64');
-  // console.log('how does the encode_image look like?: '+ encode_image); // ascii as expected -only for debug purp.
 
-  // const result = (async () => {
-    // console.log('test -goes into result?'); // yes -only for debug purp.
-    const finalImg = {
-      filename:req.file.originalname,
-      contentType: req.file.mimetype,
-      imageBase64: encode_image
-    }
-
-    console.log('test - creates finalImg?: ' + finalImg); // gives back "[object Object]" -only for debug purp.
-
-    const newImage = new Image(finalImg);
-    try {
-      await newImage
-        .save();
-        console.log('the new image to store: ' + newImage); // also displays this -only for debug purp.
-
-      return res.status(201).json({ msg: 'Image upload successfully!' });
-    } catch (error) {
-      if (error) {
-        if (error.name === 'MongooseError' && error.code === 11000) { // means, if trying to upload a duplicate image
-          return Promise.reject({ error: 'Duplicate ${req.file.originalname}. File Already Exists! ' });
-        }
-        return Promise.reject({ error: error.message || 'Cannot upload ${req.file.originalname} Something is missing!' });
-      }
-    }
-// });
-
-Promise.resolve()
-  .then(msg => {
-    res.json(msg);
-  })
-  .catch(err => {
-    res.json(err)
-  })
-// // new end
-//   res.send("single file upload to server success");
+  try{
+    const success:Promise<boolean> = Api.saveImgDB( // the info send within the request body by the client (like with postman)
+    req.file.originalname,
+    req.file.mimetype,
+    encode_image,
+    req.body.shipId_img
+    );
+    return res.status(201).json({success});
+  }catch(e){
+    return res.status(400).json(Message.se);
+  }
 });
-
-
-
-
 
  /*const obj = {
     name: req.body.name,
