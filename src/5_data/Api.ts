@@ -10,7 +10,6 @@ mongoose.set('useFindAndModify', false);
 
 class Api{
 
-
     // ***IMAGE routes***
 
     // save image with shipID to DB
@@ -23,6 +22,23 @@ class Api{
         })
 
         await newImage.save();
+        return true;
+    }
+
+    // update image will change the image of an existing image with the given shipid
+    static async updateImage(filename: string, contentType: string, imageBase64: string, shipId_img: number):Promise<boolean>{
+        // const shipid_imgStr = String(shipId_img);
+        // const chosenImage: Promise<IImage> = Api.getImageByShipId(shipid_imgStr);
+        // console.log("is the chosenimage found?: " + (await chosenImage).shipId_img + ' - ' + (await chosenImage).filename);
+        const query = {"shipId_img": shipId_img};
+        const update = {"$set": { // the new image object
+            "filename": filename,
+            "contentType": contentType,
+            "imageBase64": imageBase64,
+            "shipId_img": shipId_img
+        }};
+        const options = {"upsert": false}; // if the document to change cant be found, it will not insert a new document with these params
+        await Image.updateOne(query, update, options);
         return true;
     }
 

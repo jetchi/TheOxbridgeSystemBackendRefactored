@@ -10,7 +10,6 @@ import { Message } from "../5_data/Message";
 import multer from "multer";
 import { IImage, Image } from "../4_models/Image"
 import fs from "fs";
-import path from "path";
 import { IShip, Ship } from "../4_models/Ship";
 
 dotenv.config({ path: 'config/_environment.env' });
@@ -66,23 +65,58 @@ endpoints.post('/images', upload.single("image"), async (req, res) => { // obs: 
 
   // convert image into base64 encoding (data into ascii character set)
   const encode_image = img.toString('base64');
+
+  // check if there is an image with this shipId_img already (does the ship/team already have an image?)
+  // If so, call the put(update) method for the corresponding image, instead of inserting a new image with the same shipId
+  // this ensures, that there is only one image pr ship/team stored at a time
+  const demandedImage:Promise<IImage> = await Api.getImageByShipId(req.body.shipId_img);
   try{
-    const success:Promise<boolean> = Api.saveImgDB( // the info send within the request body by the client (like with postman)
-    req.file.originalname,
-    req.file.mimetype,
-    encode_image,
-    req.body.shipId_img
+    if (demandedImage != null){
+      console.log('there is an image for this ship/team already: ' + (await demandedImage).filename)/* + ' Current picture will be replaced.'*/;
+      const success:Promise<boolean> = Api.updateImage(
+        req.file.originalname,
+        req.file.mimetype,
+        encode_image,
+        req.body.shipId_img
+      );
+      return res.status(201).json({success});
+    }else{
+      const success:Promise<boolean> = Api.saveImgDB( // the info send within the request body by the client (like with postman)
+      req.file.originalname,
+      req.file.mimetype,
+      encode_image,
+      req.body.shipId_img
     );
     return res.status(201).json({success});
+    }
   }catch(e){
     return res.status(400).json(Message.se);
   }
 });
 
+endpoints.put('/images', upload.single("image"), async (req, res) => {
+
+  try{
+    const img = fs.readFileSync(req.file.path);
+    // convert image into base64 encoding (data into ascii character set)
+    const encode_image = img.toString('base64');
+    const success:Promise<boolean> = Api.updateImage(
+      req.file.originalname,
+      req.file.mimetype,
+      encode_image,
+      req.body.shipId_img
+    );
+    return res.status(201).json({success});
+  }catch(e){
+      return res.status(400).json(Message.se);
+  }
+});
+
+
 // ***EVENT ROUTES***
 
 // Create a new event
-endpoints.post('/events', async (req, res) => { // change from this '/api/events'
+endpoints.post('/events', async (req, res) => {
   try{
     const success:Promise<boolean> = Api.createEvent( // the info send within the request body by the client (like with postman)
       // req.body.eventId, // the ID needs to be calculated and is not given by the user
