@@ -10,49 +10,55 @@ mongoose.set('useFindAndModify', false);
 
 class Api{
 
+
+    // ***IMAGE routes***
+
     // save image with shipID to DB
-static async saveImgDB(filename: string, contentType: string, imageBase64: string, shipId_img: number): Promise<boolean>{
-    // const newEvent: IEvent = new Event({
-    const newImage: IImage = new Image ({
-      filename,
-      contentType,
-      imageBase64,
-      shipId_img
-    })
+    static async saveImgDB(filename: string, contentType: string, imageBase64: string, shipId_img: number): Promise<boolean>{
+        const newImage: IImage = new Image ({
+        filename,
+        contentType,
+        imageBase64,
+        shipId_img
+        })
 
-    await newImage.save();
+        await newImage.save();
+        return true;
+    }
 
-    // try {
-    //   await newImage.save();
+    // returns all image objects from the DB
+    static async getImages():Promise<any>{
+        const images: IImage[] = await Image.find({},{_id:0,__v:0});
+        return images;
+    }
 
-    //   res.status(201).json({ msg: 'Image upload successfully!' });
-    // } catch (error) {
-    //   if (error) {
-    //     if (error.name === 'MongooseError' && error.code === 11000) { // means, if trying to upload a duplicate image
-    //       return Promise.reject({ error: 'Duplicate ${req.file.originalname}. File Already Exists! ' });
-    //     }
-    //     return Promise.reject({ error: error.message || 'Cannot upload ${req.file.originalname} Something is missing!' });
-    //   }
-    // }
-
-    return true;
-}
+    // returns a single image object by a given shipid
+    static async getImageByShipId(shipId_img: string):Promise<any>{
+        const shipid_imgNo = Number(shipId_img);
+        const query = {"shipId_img": shipid_imgNo}; // the field with the value I am looking for
+        const projection = { // the fields of the object I want to display once its found
+            "filename": 1,
+            "contentType": 1,
+            "imagebase64": 1,
+            "shipId_img": 1
+        }
+        const demandedImage:IImage = await Image.findOne(query, projection); // finds the first object with the asked shipId_img
+        return demandedImage;
+    }
 
     // ***EVENT routes***
 
     static async createEvent(name: string, eventStart: Date, eventEnd: Date, city: string, eventCode: string, actualEventStart : Date, isLive:boolean): Promise<boolean>{
 
-        // check authorization, only if this is valid, do the things below to create a new event
+        // todo: check authorization, only if this is valid, do the things below to create a new event
 
-        // find the next event ID
-        // 1) find the last/highest ID
-        // 2)add +1 to the highest ID to make the new ID
-
+        // find the last/highest ID
         const eventArray:Promise<IEvent[]> = await Api.getEvents();
         let highestEventId:number = 0;
         (await eventArray).forEach(event => { if (event.eventId > highestEventId) {
             highestEventId = event.eventId;
         }})
+        // add +1 to the highest ID to create the new ID
         const eventId:number = Number(highestEventId) + 1;
         const newEvent: IEvent = new Event({
             eventId,
@@ -130,8 +136,6 @@ static async updateShip(shipId: number, name: string, teamName: string, teamImag
     await Ship.updateOne(query, update, options);
     return true;
 }
-
-
 
 // ***USER ROUTES***
 }

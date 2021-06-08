@@ -13,53 +13,59 @@ import fs from "fs";
 import path from "path";
 import { IShip, Ship } from "../4_models/Ship";
 
-
 dotenv.config({ path: 'config/_environment.env' });
 const endpoints = express();
 
 endpoints.use(cors());
 endpoints.use(express.static('public'));
 endpoints.use(bodyParser.json());
-
 endpoints.use(bodyParser.urlencoded({extended: false}));
 
-const storage = multer.diskStorage({ // file storage engine will tell multer how and where to store the files
+// create a file storage engine. It will tell multer how and where to store the files
+const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, './src/uploads') // NB path!
   },
   filename: (req, file, cb) => {
     const fileExtension = file.originalname.substr(file.originalname.lastIndexOf('.')); // will return the ".jpg" from a image.jpg
-    cb(null, file.fieldname + '-' + Date.now() + fileExtension) // this is how the new name for the file is put together 8stored on the server in "uploads" folder)
+    cb(null, file.fieldname + '-' + Date.now() + fileExtension) // this is how the new name for the file is put together & stored on the server in "uploads" folder
   }
 });
 
-const upload = multer({storage}); // creating middleware
+// creating middleware multer
+const upload = multer({
+  storage,
+  limits: { fieldSize: 25 * 1024 * 1024 } // sets the file size allowed for upload
+});
 
 DB.connect(); // ask for connections
 
+// ***IMAGE ROUTES***
 
-// get all images multer test 1 : in progress
-// endpoints.get('/', (req, res) => {
-//   Image.find({}, (err, items) => {
-//     if (err) {
-//       console.log(err);
-//       res.status(500).send(Message.cnap);
-//     }
-//     else {
-//       res.render('imagesPage', { itmes: items});
-//     }
-//   });
-// });
+// get all images
+endpoints.get('/images', async (req, res) => {
+  const images:Promise<IImage[]> = await Api.getImages();
+  return res.status(200).json(images);
+});
 
-// upload an image to the server & DB using multer - works
-endpoints.post('/images', upload.single("image"), async (req, res) => { // sending via postman: the key field in the body must equal "image"
+// retrieve a single Image with shipId
+endpoints.get('/images/:shipId_img', async (req, res) => {
+  try{
+    const demandedImage:Promise<IImage> = await Api.getImageByShipId(req.params.shipId_img);
+    return res.status(200).json(demandedImage);
+  }catch(e){
+    return res.status(400).json(e);
+  }
+});
 
+// upload an image to the server & DB using multer
+endpoints.post('/images', upload.single("image"), async (req, res) => { // obs: sending via postman -> the key field in the body must equal "image"
   // Save the image in the DB as follows:
-
   const img = fs.readFileSync(req.file.path);
+  // console.log('path of img: ' + req.file.path); // path of img: src\uploads\image-1623070185453.jpg
+
   // convert image into base64 encoding (data into ascii character set)
   const encode_image = img.toString('base64');
-
   try{
     const success:Promise<boolean> = Api.saveImgDB( // the info send within the request body by the client (like with postman)
     req.file.originalname,
@@ -72,25 +78,6 @@ endpoints.post('/images', upload.single("image"), async (req, res) => { // sendi
     return res.status(400).json(Message.se);
   }
 });
-
- /*const obj = {
-    name: req.body.name,
-    desc: req.body.desc,
-    img: {
-      data: fs.readFileSync(path.join(__dirname + '../uploads/' + req.file.filename)),
-      contentType: 'image/png'
-    }
-  }
-  Image.create(obj, (err, item) => {
-    if (err) {
-      console.log(err);
-    }
-    else {
-      item.save();
-      res.redirect('/images');
-    }
-  })
-  */
 
 // ***EVENT ROUTES***
 

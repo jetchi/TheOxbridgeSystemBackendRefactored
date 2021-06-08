@@ -39,6 +39,6 @@ const ImageSchema: Schema = new Schema({
     // }
 });
 
-const Image: Model<IImage> = model('Image', ImageSchema); // this is where we specify that mongoose will create a collection inside the db called "Image", where the images are stored
+const Image: Model<IImage> = model('Image', ImageSchema); // this is where we specify that mongoose will create an Image collection inside the db, where the images are stored
 
 export {Image,IImage}
