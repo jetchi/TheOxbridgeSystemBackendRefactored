@@ -4,7 +4,7 @@
         "skipLibCheck": true,
         "esModuleInterop": true,
         "target": "es6",
-        "noImplicitAny": true, // false for multer stuff?
+        "noImplicitAny": true,
         "moduleResolution": "node",
         "sourceMap": true,
         "outDir": "./dist",
